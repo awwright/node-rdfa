@@ -1,10 +1,9 @@
 {
   "name": "rdfa",
-  "version": "0.0.0",
   "description": "Parse RDFa documents for data",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha t"
   },
   "keywords": [
     "rdfa"
