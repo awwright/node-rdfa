@@ -1,0 +1,3 @@
+[submodule "t/rdfa.github.io"]
+	path = t/rdfa.github.io
+	url = https://github.com/rdfa/rdfa.github.io.git
