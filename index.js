@@ -160,7 +160,7 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRI = function fromTERMorCURIEorAbsIRI
 	}
 }
 RDFaContext.prototype.fromTERMorCURIEorAbsIRIs = function fromTERMorCURIEorAbsIRIs(str){
-	// @property, @typeof, @rel, and @rev support the datatype TERMorCURIEorAbsIRIs
+	// @property, @typeof, @rel, and @rev use TERMorCURIEorAbsIRIs
 	var ctx = this;
 	return tokenize(str).map(function(term){
 		return ctx.fromTERMorCURIEorAbsIRI(term);
@@ -179,7 +179,7 @@ function RDFaParser(base){
 	ctx.bm = {};
 	ctx.skipElement = true;
 	// RDFa the 'default prefix' mapping is the XHTML NS
-	ctx.prefixes[''] = XHTMLNS;
+	ctx.prefixes[':'] = XHTMLNS;
 	ctx.parentSubject = RDF.environment.createNamedNode(ctx.base);
 	ctx.parentObject = RDF.environment.createNamedNode(ctx.base);
 	ctx.newSubject = RDF.environment.createNamedNode(ctx.base);
@@ -214,7 +214,6 @@ RDFaParser.prototype.processElement = function processElement(node){
 	var setResource = node.hasAttribute('resource') ? node.getAttribute('resource') : null;
 	var setHref = node.hasAttribute('href') ? node.getAttribute('href') : null;
 	var setInlist = node.hasAttribute('inlist') ? node.getAttribute('inlist') : null;
-	var setLang = node.hasAttribute('lang') ? node.getAttribute('lang') : null;
 
 	// Amendment. Change IRI base with xml:base
 	if(node.hasAttribute('xml:base')){
@@ -223,7 +222,6 @@ RDFaParser.prototype.processElement = function processElement(node){
 	
 	// Step 2. set default vocab
 	if(setVocab){
-		console.error('setVocab='+setVocab);
 		// TODO emit UsesVocab
 		this.outputGraph.add(RDF.environment.createTriple(
 			rdfaContext.rdfenv.createNamedNode(rdfaContext.base),
@@ -251,9 +249,8 @@ RDFaParser.prototype.processElement = function processElement(node){
 	}
 
 	// Step 4. Set language
-	// TODO support xml:lang
-	if(setLang){
-		rdfaContext.language = setLang;
+	if(node.hasAttribute('lang')){
+		rdfaContext.language = node.getAttribute('lang');
 	}
 	if(node.hasAttribute('xml:lang')){
 		rdfaContext.language = node.getAttribute('xml:lang');
@@ -328,7 +325,6 @@ RDFaParser.prototype.processElement = function processElement(node){
 			typedResource = rdfaContext.currentObjectResource;
 		}
 	}
-	//if(typeof rdfaContext.newSubject!='string') throw new Error('newSubject not defined');
 
 	// If the element does not contain @rel, @rev, @property, @about, @href, @src, @resource, @typeof: then set skipElement <- true
 	if(
