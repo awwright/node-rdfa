@@ -278,10 +278,10 @@ RDFaParser.prototype.processElement = function processElement(node){
 			// Step 5.2.
 			if(typeof setAbout=='string'){
 				rdfaContext.newSubject = rdfaContext.fromSafeCURIEorCURIEorIRI(setAbout);
-			}else if(typeof setHref=='string'){
-				rdfaContext.newSubject = rdfaContext.fromIRI(setHref);
 			}else if(typeof setResource=='string'){
 				rdfaContext.newSubject = rdfaContext.fromSafeCURIEorCURIEorIRI(setResource);
+			}else if(typeof setHref=='string'){
+				rdfaContext.newSubject = rdfaContext.fromIRI(setHref);
 			}else if(typeof setSrc=='string'){
 				rdfaContext.newSubject = rdfaContext.fromIRI(setSrc);
 //			}else if(node===document){
