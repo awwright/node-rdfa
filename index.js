@@ -530,21 +530,6 @@ function parse(base, document){
 			print('other');
 			console.log(node);
 		}
-		if(node.namespaceURI=='http://fullstack.wiki/ns/'){
-			if(node.localName.toLowerCase()=='rdf-for-each'){
-				// Create a graph store query with all the constraints in this and parent elements, but not child elements
-				// For every result in the query, copy it
-				for(var i=0; i<node.childNodes.length; i++){
-					node.parentNode.appendChild(node.childNodes[i].cloneNode(true));
-				}
-				// Move nodes?
-				//while (node.childNodes.length > 0) node.parentNode.appendChild(node.childNodes[0]);
-				// Remove the parsed node
-				//node.parentNode.removeChild(node);
-			}else{
-				console.error('Unknown directive');
-			}
-		}
 		// Visit the next element recursively
 		// If there's a child, visit that
 		// Otherwise, try to visit the next sibling
