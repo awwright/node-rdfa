@@ -2,7 +2,7 @@
 	"prefixes": {
 		":": "http://www.w3.org/1999/xhtml/vocab#"
 	},
-	"context:": {
+	"context": {
 		"csvw:": "http://www.w3.org/ns/csvw#",
 		"dcat:": "http://www.w3.org/ns/dcat#",
 		"qb:": "http://purl.org/linked-data/cube#",

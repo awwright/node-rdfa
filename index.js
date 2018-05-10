@@ -53,7 +53,7 @@ RDFaContext.prototype.child = function child(node){
 	ctx.parentContext = this;
 	ctx.depth = this.depth + 1;
 	ctx.base = this.base;
-	ctx.prefixesDefault = this.prefixesDefault = {};
+	ctx.prefixesDefault = this.prefixesDefault;
 	if(this.skipElement){
 		ctx.parentSubject = this.parentSubject;
 		ctx.parentObject = this.parentObject;
@@ -120,9 +120,9 @@ RDFaContext.prototype.fromCURIE = function fromCURIE(str){
 	var proto = iri.substring(0, iproto+1);
 	if(proto=='_:'){
 		return this.mapBlankNode(iri);
-	}else if(Object.hasOwnProperty.call(ctx.prefixes, str)){
+	}else if(Object.hasOwnProperty.call(ctx.prefixes, proto)){
 		return this.rdfenv.createNamedNode(ctx.prefixes[proto] + str.substring(iproto+1));
-	}else if(Object.hasOwnProperty.call(ctx.prefixesDefault, str)){
+	}else if(Object.hasOwnProperty.call(ctx.prefixesDefault, proto)){
 		console.error('Assumed prefix for '+proto+' = <'+ctx.prefixesDefault[proto]+'>');
 		return this.rdfenv.createNamedNode(ctx.prefixesDefault[proto] + str.substring(iproto+1));
 	}else{
@@ -145,6 +145,8 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRI = function fromTERMorCURIEorAbsIRI
 		if(Object.hasOwnProperty.call(ctx.terms, str)){
 			return ctx.rdfenv.createNamedNode(ctx.terms[str]);
 		}else{
+			//if(typeof ctx.vocabulary!=='string') throw new Error('vocabulary not set');
+			//if(typeof ctx.vocabulary!=='string') return;
 			return ctx.rdfenv.createNamedNode(ctx.vocabulary + str);
 		}
 	}else{
@@ -154,6 +156,9 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRI = function fromTERMorCURIEorAbsIRI
 			return ctx.mapBlankNode(term);
 		}else if(Object.hasOwnProperty.call(ctx.prefixes, proto)){
 			return ctx.rdfenv.createNamedNode(ctx.prefixes[proto] + str.substring(iproto+1));
+		}else if(Object.hasOwnProperty.call(ctx.prefixesDefault, proto)){
+			console.error('Assumed prefix for '+proto+' = <'+ctx.prefixesDefault[proto]+'>');
+			return ctx.rdfenv.createNamedNode(ctx.prefixesDefault[proto] + str.substring(iproto+1));
 		}else{
 			return ctx.rdfenv.createNamedNode(str);
 		}
@@ -530,7 +535,7 @@ function parse(base, document){
 				// Remove the parsed node
 				//node.parentNode.removeChild(node);
 			}else{
-				console.log('Unknown directive');
+				console.error('Unknown directive');
 			}
 		}
 		// Visit the next element recursively
