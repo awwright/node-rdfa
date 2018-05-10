@@ -252,6 +252,13 @@ RDFaParser.prototype.processElement = function processElement(node){
 			rdfaContext.prefixes[prefixName] = prefixUri;
 		}
 	}
+	// Amendment: Import IRI mappings from xmlns
+	for(var i=0; i<node.attributes.length; i++){
+		var name = node.attributes[i].name;
+		if(name.substring(0, 6)=='xmlns:'){
+			rdfaContext.prefixes[name.substring(6)+':'] = node.attributes[i].value.trim();
+		}
+	}
 
 	// Step 4. Set language
 	if(node.hasAttribute('lang')){
