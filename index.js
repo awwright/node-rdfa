@@ -489,6 +489,7 @@ RDFaParser.prototype.processNodeEnd = function processElementEnd(){
 
 module.exports.parse = parse;
 function parse(base, document){
+	if(typeof base!=='string') throw new Error('Expected `base` to be a string');
 	if(typeof document!=='object') throw new Error('Unexpected argument');
 	var parser = new RDFaParser(base);
 	var node = document;
