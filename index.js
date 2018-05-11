@@ -234,6 +234,8 @@ RDFaParser.prototype.processElement = function processElement(node){
 			rdfaContext.rdfenv.createNamedNode(setVocab)
 		));
 		rdfaContext.vocabulary = rdfaContext.fromIRI(setVocab);
+	}else if(setVocab===""){
+		rdfaContext.vocabulary = null;
 	}
 
 	// Step 3. set IRI mappings
