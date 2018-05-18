@@ -33,7 +33,7 @@ function RDFaContext(base, node){
 	this.parentContext = null;
 	this.parentSubject = this.rdfenv.createNamedNode(base);
 	this.parentObject = null;
-	this.incomplete = [];
+	this.pendingincomplete = [];
 	this.listMapping = [];
 	this.language = null;
 	this.prefixes = {};
@@ -45,6 +45,7 @@ function RDFaContext(base, node){
 	this.skipElement = true;
 	this.currentObjectResource = null;
 	this.newSubject = null;
+	this.incomplete = [];
 }
 RDFaContext.prototype.child = function child(node){
 	var ctx = new RDFaContext(this.base, node);
@@ -71,7 +72,7 @@ RDFaContext.prototype.child = function child(node){
 		ctx.parentObject = this.currentObjectResource || this.newSubject || this.parentSubject;
 		ctx.prefixes = {};
 		for(var n in this.prefixes) ctx.prefixes[n] = this.prefixes[n];
-		ctx.incomplete = this.incomplete;
+		ctx.pendingincomplete = this.incomplete;
 		ctx.language = this.language;
 		ctx.vocabulary = this.vocabulary;
 	}
@@ -174,7 +175,6 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRIs = function fromTERMorCURIEorAbsIR
 
 module.exports.RDFaParser = RDFaParser;
 function RDFaParser(base){
-	debugger;
 	this.base = '';
 	this.stack = [];
 	this.queries = [];
@@ -458,7 +458,7 @@ RDFaParser.prototype.processElement = function processElement(node){
 
 	// Step 12. If skip element is false, and new subject is non-null, then complete any incomplete triples from the current context
 	if(rdfaContext.skipElement==false && rdfaContext.newSubject){
-		rdfaContext.incomplete.forEach(function(statement){
+		rdfaContext.pendingincomplete.forEach(function(statement){
 			// If `direction` is 'none' then... what? We don't have a 'none' direction
 			if(statement.direction===1){
 				self.outputGraph.add(RDF.environment.createTriple(
