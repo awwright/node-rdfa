@@ -59,6 +59,7 @@ RDFaContext.prototype.child = function child(node){
 		ctx.parentSubject = this.parentSubject;
 		ctx.parentObject = this.parentObject;
 		ctx.incomplete = this.incomplete;
+		ctx.pendingincomplete = this.pendingincomplete;
 		ctx.listMapping = this.listMapping;
 		ctx.language = this.language;
 		ctx.prefixes = {};
