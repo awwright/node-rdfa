@@ -16,9 +16,7 @@ const XSDString = "http://www.w3.org/2001/XMLSchema#string";
 
 module.exports.tokenize = tokenize;
 function tokenize(s){
-	var t = s.trim();
-	var u = s.split(/\s+/);
-	return u;
+	return s.trim().split(/\s+/);
 }
 
 module.exports.RDFaContext = RDFaContext;
