@@ -96,13 +96,16 @@ function generateCasesTtl(version, lang){
 			var result = parse(inputURI, document);
 			var ttl = result.outputGraph.toArray().map(function(t){ return t.toString()+'\n'; }).join('\n');
 
-			//console.log(ttl);
-			//console.log(queryContents);
 			var turtleParser = new TurtleParser();
 			var expectedGraph = rdfenv.createGraph();
 			turtleParser.parse(queryContents, null, inputURI, null, expectedGraph);
-
-			assert.ok(expectedGraph.equals(result.outputGraph), queryContents);
+			//console.log("expectedGraph:\n"+expectedGraph.toArray().join("\n"));
+			//console.log("result:\n"+result.outputGraph.toArray().join("\n"));
+			//assert.equal(rdfnormalize(expectedGraph), rdfnormalize(result.outputGraph), 'Graphs have same contents');
+			assert.equal(expectedGraph.length, result.outputGraph.length, 'Graphs must be same size');
+			var match = expectedGraph.equals(result.outputGraph);
+			//console.log(match);
+			assert.ok(match, 'Graphs are equal');
 		});
 	});
 }

@@ -37,6 +37,7 @@ function RDFaContext(base, node){
 	this.prefixes = {};
 	this.prefixesDefault = defaults.context;
 	this.terms = {};
+	this.termsDefault = defaults.terms;
 	this.vocabulary = null;
 	this.query = null;
 	// Local variables, set based on local attributes and child elements
@@ -53,6 +54,7 @@ RDFaContext.prototype.child = function child(node){
 	ctx.depth = this.depth + 1;
 	ctx.base = this.base;
 	ctx.prefixesDefault = this.prefixesDefault;
+	ctx.termsDefault = this.termsDefault;
 	if(this.skipElement){
 		ctx.parentSubject = this.parentSubject;
 		ctx.parentObject = this.parentObject;
@@ -145,10 +147,11 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRI = function fromTERMorCURIEorAbsIRI
 		// No colon, this must be a term
 		if(Object.hasOwnProperty.call(ctx.terms, str)){
 			return ctx.rdfenv.createNamedNode(ctx.terms[str]);
+		}else if(Object.hasOwnProperty.call(ctx.termsDefault, str)){
+			console.error('Assumed IRI for term '+str+' = <'+ctx.prefixesDefault[proto]+'>');
+			return ctx.rdfenv.createNamedNode(ctx.termsDefault[str]);
 		}else{
-			//if(typeof ctx.vocabulary!=='string') throw new Error('vocabulary not set');
-			//if(typeof ctx.vocabulary!=='string') return;
-			return ctx.rdfenv.createNamedNode(ctx.vocabulary + str);
+			return null;
 		}
 	}else{
 		// Colon present, check for CURIE
@@ -170,7 +173,7 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRIs = function fromTERMorCURIEorAbsIR
 	var ctx = this;
 	return tokenize(str).map(function(term){
 		return ctx.fromTERMorCURIEorAbsIRI(term);
-	});
+	}).filter(function(v){ return !!v; });
 }
 
 module.exports.RDFaParser = RDFaParser;
@@ -499,6 +502,8 @@ module.exports.parse = parse;
 function parse(base, document, options){
 	if(typeof base!=='string') throw new Error('Expected `base` to be a string');
 	if(typeof document!=='object') throw new Error('Unexpected argument');
+	if(typeof options==='object'){
+	}
 	var parser = new RDFaParser(base);
 	var node = document;
 
