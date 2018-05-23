@@ -3,7 +3,7 @@
   "description": "Parse RDFa documents for data",
   "main": "index.js",
   "scripts": {
-    "test": "mocha t"
+    "test": "mocha"
   },
   "keywords": [
     "rdfa"
@@ -15,7 +15,20 @@
   },
   "devDependencies": {
     "xmldom": "^0.1.27",
-    "mocha": "^5.1.1",
-    "rdfstore": "^0.9.17"
-  }
+    "mocha": "^5.1.1"
+  },
+  "bin": {
+    "rdfa": "rdfa-httpd.js"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/awwright/node-rdfa.git"
+  },
+  "bugs": {
+    "url": "https://github.com/awwright/node-rdfa/issues"
+  },
+  "homepage": "https://github.com/awwright/node-rdfa#readme"
 }
