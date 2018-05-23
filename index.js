@@ -178,16 +178,18 @@ function RDFaParser(base){
 	this.base = '';
 	this.stack = [];
 	this.queries = [];
-	this.outputGraph = RDF.environment.createGraph();
-	this.processorGraph = RDF.environment.createGraph();
+	this.rdfenv = RDF.environment;
+	this.outputGraph = this.rdfenv.createGraph();
+	this.processorGraph = this.rdfenv.createGraph();
 	var ctx = new RDFaContext(base, null);
+	ctx.rdfenv = this.rdfenv;
 	ctx.bm = {};
 	ctx.skipElement = true;
 	// RDFa the 'default prefix' mapping is the XHTML NS
 	ctx.prefixes[':'] = XHTMLNS;
-	ctx.parentSubject = RDF.environment.createNamedNode(ctx.base);
-	ctx.parentObject = RDF.environment.createNamedNode(ctx.base);
-	ctx.newSubject = RDF.environment.createNamedNode(ctx.base);
+	ctx.parentSubject = this.rdfenv.createNamedNode(ctx.base);
+	ctx.parentObject = this.rdfenv.createNamedNode(ctx.base);
+	ctx.newSubject = this.rdfenv.createNamedNode(ctx.base);
 	this.stack.push(ctx);
 }
 
@@ -306,7 +308,7 @@ RDFaParser.prototype.processElement = function processElement(node){
 				// Document initialization is a special case not handled by this function
 //				rdfaContext.newSubject = base.toString();
 			}else if(typeof setTypeof=='string'){
-				rdfaContext.newSubject = RDF.environment.createBlankNode();
+				rdfaContext.newSubject = rdfaContext.rdfenv.createBlankNode();
 			}else{
 				// parentObject should always be defined at this point
 				if(!rdfaContext.parentObject) throw new Error('Expected parentObject');
@@ -390,7 +392,7 @@ RDFaParser.prototype.processElement = function processElement(node){
 		}
 		if (setRev) {
 			rdfaContext.fromTERMorCURIEorAbsIRIs(setRev).forEach(function(predicate){
-				self.outputGraph.add(RDF.environment.createTriple(
+				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
 					rdfaContext.currentObjectResource,
 					predicate,
 					rdfaContext.newSubject
@@ -465,13 +467,13 @@ RDFaParser.prototype.processElement = function processElement(node){
 		rdfaContext.pendingincomplete.forEach(function(statement){
 			// If `direction` is 'none' then... what? We don't have a 'none' direction
 			if(statement.direction===1){
-				self.outputGraph.add(RDF.environment.createTriple(
+				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
 					rdfaContext.parentSubject,
 					statement.predicate,
 					rdfaContext.newSubject
 				));
 			}else if(statement.direction===-1){
-				self.outputGraph.add(RDF.environment.createTriple(
+				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
 					rdfaContext.newSubject,
 					statement.predicate,
 					rdfaContext.parentSubject
@@ -494,12 +496,16 @@ RDFaParser.prototype.processNodeEnd = function processElementEnd(){
 }
 
 module.exports.parse = parse;
-function parse(base, document){
+function parse(base, document, options){
 	if(typeof base!=='string') throw new Error('Expected `base` to be a string');
 	if(typeof document!=='object') throw new Error('Unexpected argument');
 	var parser = new RDFaParser(base);
 	var node = document;
-	
+
+	if(typeof options==='object'){
+		if(options.rdfenv) parser.rdfenv = options.rdfenv;
+	}
+
 	function print(s){
 		var rdfaContext = parser.stack[parser.stack.length-1];
 		var str = '';
