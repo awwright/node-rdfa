@@ -91,7 +91,8 @@ RDFaContext.prototype.fromSafeCURIEorCURIEorIRI = function fromSafeCURIEorCURIEo
 	if(str.charAt(0)=='[' && str.charAt(str.length-1)==']'){
 		var safecurie = str.substring(1, str.length-1).trim();
 		if (safecurie.length === 0) {
-			throw new Error('Bad SafeCURIE');
+			return null;
+			//throw new Error('Bad SafeCURIE');
 		}else{
 			return ctx.fromCURIE(safecurie);
 		}
@@ -225,14 +226,15 @@ RDFaParser.prototype.processElement = function processElement(node){
 	}
 	
 	// Step 2. set default vocab
-	if(setVocab){
+	if(typeof setVocab=='string') var vocabIRI = rdfaContext.fromIRI(setVocab);
+	if(vocabIRI){
 		// TODO emit UsesVocab
-		this.outputGraph.add(RDF.environment.createTriple(
+		this.outputGraph.add(rdfaContext.rdfenv.createTriple(
 			rdfaContext.rdfenv.createNamedNode(rdfaContext.base),
 			rdfaContext.rdfenv.createNamedNode('http://www.w3.org/ns/rdfa#usesVocabulary'),
-			rdfaContext.rdfenv.createNamedNode(setVocab)
+			rdfaContext.rdfenv.createNamedNode(vocabIRI)
 		));
-		rdfaContext.vocabulary = rdfaContext.fromIRI(setVocab);
+		rdfaContext.vocabulary = vocabIRI;
 	}else if(setVocab===""){
 		rdfaContext.vocabulary = null;
 	}
@@ -261,6 +263,9 @@ RDFaParser.prototype.processElement = function processElement(node){
 		}
 	}
 
+	if(typeof setAbout=='string') var aboutIRI = rdfaContext.fromSafeCURIEorCURIEorIRI(setAbout);
+	if(typeof setResource=='string') var resourceIRI = rdfaContext.fromSafeCURIEorCURIEorIRI(setResource);
+
 	// Step 4. Set language
 	if(node.hasAttribute('lang')){
 		rdfaContext.language = node.getAttribute('lang');
@@ -275,9 +280,9 @@ RDFaParser.prototype.processElement = function processElement(node){
 			// Step 5.1.
 			// If the current element contains the @property attribute, but does not contain either the @content or @datatype attributes, then
 			// Set new subject
-			if(typeof setAbout=='string'){
+			if(aboutIRI){
 				// by using the resource from @about, if present, obtained according to the section on CURIE and IRI Processing;
-				rdfaContext.newSubject = rdfaContext.fromSafeCURIEorCURIEorIRI(setAbout);
+				rdfaContext.newSubject = aboutIRI;
 				if(typeof setTypeof=='string'){
 					typedResource = rdfaContext.newSubject;
 				}
@@ -289,10 +294,10 @@ RDFaParser.prototype.processElement = function processElement(node){
 			}
 		}else{
 			// Step 5.2.
-			if(typeof setAbout=='string'){
-				rdfaContext.newSubject = rdfaContext.fromSafeCURIEorCURIEorIRI(setAbout);
-			}else if(typeof setResource=='string'){
-				rdfaContext.newSubject = rdfaContext.fromSafeCURIEorCURIEorIRI(setResource);
+			if(aboutIRI){
+				rdfaContext.newSubject = aboutIRI;
+			}else if(resourceIRI){
+				rdfaContext.newSubject = resourceIRI;
 			}else if(typeof setHref=='string'){
 				rdfaContext.newSubject = rdfaContext.fromIRI(setHref);
 			}else if(typeof setSrc=='string'){
@@ -314,8 +319,8 @@ RDFaParser.prototype.processElement = function processElement(node){
 	}else{
 		// Step 6. the current element contains a @rel or @rev attribute.
 		// establish both a value for new subject and a value for current object resource.
-		if(typeof setAbout=='string'){
-			rdfaContext.newSubject = rdfaContext.fromSafeCURIEorCURIEorIRI(setAbout);
+		if(aboutIRI){
+			rdfaContext.newSubject = aboutIRI;
 			if(typeof setTypeof=='string'){
 				typedResource = rdfaContext.newSubject;
 			}
@@ -325,16 +330,16 @@ RDFaParser.prototype.processElement = function processElement(node){
 			if(!rdfaContext.parentObject) throw new Error('Expected parentObject');
 			rdfaContext.newSubject = rdfaContext.parentObject;
 		}
-		if(typeof setResource=='string'){
-			rdfaContext.currentObjectResource = rdfaContext.fromSafeCURIEorCURIEorIRI(setResource);
+		if(resourceIRI){
+			rdfaContext.currentObjectResource = resourceIRI;
 		}else if(typeof setHref=='string'){
 			rdfaContext.currentObjectResource = rdfaContext.fromIRI(setHref);
 		}else if(typeof setSrc=='string'){
 			rdfaContext.currentObjectResource = rdfaContext.fromIRI(setSrc);
-		}else if(typeof setTypeof=='string' && typeof setAbout!='string'){
+		}else if(typeof setTypeof=='string' && !aboutIRI){
 			rdfaContext.currentObjectResource = rdfaContext.rdfenv.createBlankNode();
 		}
-		if(typeof setTypeof=='string' && typeof setAbout!='string'){
+		if(typeof setTypeof=='string' && !aboutIRI){
 			typedResource = rdfaContext.currentObjectResource;
 		}
 	}
@@ -344,10 +349,10 @@ RDFaParser.prototype.processElement = function processElement(node){
 		typeof setRel!='string'
 		&& typeof setRev!='string'
 		&& typeof setProperty!='string'
-		&& typeof setAbout!='string'
+		&& !aboutIRI
 		&& typeof setHref!='string'
 		&& typeof setSrc!='string'
-		&& typeof setResource!='string'
+		&& !resourceIRI
 		&& typeof setTypeof!='string'
 	){
 		rdfaContext.skipElement = true;
@@ -435,7 +440,7 @@ RDFaParser.prototype.processElement = function processElement(node){
 			datatypeIRI = XSDString;
 			currentPropertyValue = rdfaContext.rdfenv.createLiteral(setContent, rdfaContext.language);
 		}else if(typeof setRel!='string' && typeof setRev!='string' && typeof setContent!='string'){
-			if(typeof setResource=='string') currentPropertyValue = rdfaContext.fromSafeCURIEorCURIEorIRI(setResource);
+			if(resourceIRI) currentPropertyValue = resourceIRI;
 			else if(typeof setHref=='string') currentPropertyValue = rdfaContext.fromIRI(setHref);
 			else if(typeof setSrc=='string') currentPropertyValue = rdfaContext.fromIRI(setSrc);
 			else currentPropertyValue = rdfaContext.rdfenv.createLiteral(node.textContent, rdfaContext.language);
