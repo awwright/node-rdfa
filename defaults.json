@@ -1,4 +1,5 @@
 {
+	"source": "https://www.w3.org/2011/rdfa-context/rdfa-1.1",
 	"prefixes": {
 		":": "http://www.w3.org/1999/xhtml/vocab#"
 	},
