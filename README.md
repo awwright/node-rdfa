@@ -20,7 +20,7 @@ Goals:
 * bin/rdfa-turtle.js - read a file and print extracted triples
 * defaults.json - list of RDFa Initial Context vocabulary & terms
 * index.js - the bulk of the logic
-* t/suite.js - runs the library against a local copy of the RDFa test suite
+* test/suite.js - runs the library against a local copy of the RDFa test suite
 
 ## API
 

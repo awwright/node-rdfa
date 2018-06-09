@@ -94,14 +94,12 @@ function generateCasesTtl(version, lang){
 
 			var document = new DOMParser().parseFromString(inputContents, 'text/xml');
 			var result = parse(inputURI, document);
-			var ttl = result.outputGraph.toArray().map(function(t){ return t.toString()+'\n'; }).join('\n');
 
 			var turtleParser = TurtleParser.parse(queryContents, inputURI);
 			var expectedGraph = turtleParser.graph;
 			//console.log("expectedGraph:\n"+expectedGraph.toArray().join("\n"));
 			//console.log("result:\n"+result.outputGraph.toArray().join("\n"));
 			//assert.equal(rdfnormalize(expectedGraph), rdfnormalize(result.outputGraph), 'Graphs have same contents');
-			assert.equal(expectedGraph.length, result.outputGraph.length, 'Graphs must be same size');
 			var match = expectedGraph.equals(result.outputGraph);
 			//console.log(match);
 			if(!match){
