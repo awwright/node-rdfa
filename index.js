@@ -177,8 +177,9 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRIs = function fromTERMorCURIEorAbsIR
 }
 
 module.exports.RDFaParser = RDFaParser;
-function RDFaParser(base){
+function RDFaParser(base, documentElement){
 	this.base = '';
+	this.documentElement = documentElement;
 	this.stack = [];
 	this.queries = [];
 	this.rdfenv = RDF.environment;
@@ -269,6 +270,7 @@ RDFaParser.prototype.processElement = function processElement(node){
 	}
 
 	if(typeof setAbout=='string') var aboutIRI = rdfaContext.fromSafeCURIEorCURIEorIRI(setAbout);
+	else if(node==this.documentElement) var aboutIRI = rdfaContext.base.toString();
 	if(typeof setResource=='string') var resourceIRI = rdfaContext.fromSafeCURIEorCURIEorIRI(setResource);
 
 	// Step 4. Set language
@@ -307,8 +309,8 @@ RDFaParser.prototype.processElement = function processElement(node){
 				rdfaContext.newSubject = rdfaContext.fromIRI(setHref);
 			}else if(typeof setSrc=='string'){
 				rdfaContext.newSubject = rdfaContext.fromIRI(setSrc);
-//			}else if(node===document){
-				// Document initialization is a special case not handled by this function
+//			}else if(node===this.documentElement){
+				// This is set earlier when aboutIRI is computed
 //				rdfaContext.newSubject = base.toString();
 			}else if(typeof setTypeof=='string'){
 				rdfaContext.newSubject = rdfaContext.rdfenv.createBlankNode();
@@ -504,7 +506,7 @@ function parse(base, document, options){
 	if(typeof document!=='object') throw new Error('Unexpected argument');
 	if(typeof options==='object'){
 	}
-	var parser = new RDFaParser(base);
+	var parser = new RDFaParser(base, document.documentElement);
 	var node = document;
 
 	if(typeof options==='object'){
