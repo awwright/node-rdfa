@@ -6,6 +6,8 @@ var IRI = require('iri');
 
 var defaults = require('./defaults.json');
 
+var rdfaNS = RDF.ns('http://www.w3.org/ns/rdfa');
+
 var console = module.exports.console = { log: function(){}, error: function(){}, };
 
 const StringLiteralURI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral";
@@ -237,8 +239,8 @@ RDFaParser.prototype.processElement = function processElement(node){
 		// TODO emit UsesVocab
 		this.outputGraph.add(rdfaContext.rdfenv.createTriple(
 			rdfaContext.rdfenv.createNamedNode(rdfaContext.base),
-			rdfaContext.rdfenv.createNamedNode('http://www.w3.org/ns/rdfa#usesVocabulary'),
-			rdfaContext.rdfenv.createNamedNode(vocabIRI)
+			rdfaNS('usesVocabulary'),
+			vocabIRI
 		));
 		rdfaContext.vocabulary = vocabIRI;
 	}else if(setVocab===""){
