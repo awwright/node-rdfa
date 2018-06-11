@@ -6,7 +6,7 @@ var IRI = require('iri');
 
 var defaults = require('./defaults.json');
 
-var rdfaNS = RDF.ns('http://www.w3.org/ns/rdfa');
+var rdfaNS = RDF.ns('http://www.w3.org/ns/rdfa#');
 
 var console = module.exports.console = { log: function(){}, error: function(){}, };
 
@@ -292,14 +292,19 @@ RDFaParser.prototype.processElement = function processElement(node){
 			if(aboutIRI){
 				// by using the resource from @about, if present, obtained according to the section on CURIE and IRI Processing;
 				rdfaContext.newSubject = aboutIRI;
-				if(typeof setTypeof=='string'){
-					typedResource = rdfaContext.newSubject;
-				}
 			}else{
 				// otherwise, if parent object is present, new subject is set to the value of parent object.
 				// parentObject should always be defined at this point
 				if(!rdfaContext.parentObject) throw new Error('Expected parentObject');
 				rdfaContext.newSubject = rdfaContext.parentObject;
+			}
+			// If @typeof is present then typed resource is set to the resource obtained from the first match from the following rules:
+			if(typeof setTypeof=='string'){
+				if(aboutIRI) typedResource = aboutIRI;
+				else if(resourceIRI) typedResource = resourceIRI;
+				else if(typeof setHref=='string') typedResource = rdfaContext.fromIRI(setHref);
+				else if(typeof setSrc=='string') typedResource = rdfaContext.fromIRI(setSrc);
+				else typedResource = rdfaContext.rdfenv.createBlankNode();
 			}
 		}else{
 			// Step 5.2.
