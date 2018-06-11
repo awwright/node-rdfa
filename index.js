@@ -254,20 +254,21 @@ RDFaParser.prototype.processElement = function processElement(node){
 		for(var i=0; i<list.length; i+=2){
 			var prefixName = list[i];
 			// FIXME this is the ASCII subset of allowed names
-			if(!prefixName.match(/^([A-Za-z_][-.0-9A-Za-z_]*):$/)) throw new Error('Invalid prefix');
+			// FIXME does NCName allow empty prefixes?
+			if(!prefixName.match(/^([A-Za-z_][-.0-9A-Za-z_]*)?:$/)) throw new Error('Invalid prefix');
 			// A Conforming RDFa Processor must ignore any definition of a mapping for the '_' prefix
 			if(prefixName=='_:') continue;
 			// Validate mapped URI @@@TODO Allow Unicode
 			var prefixUri = list[i+1];
 			if(!prefixUri.match(/^(([^:\/?#]+):)?(\/\/([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?$/)) throw new Error('Invalid URI/IRI');
-			rdfaContext.prefixes[prefixName] = prefixUri;
+			rdfaContext.prefixes[prefixName] = rdfaContext.fromIRI(prefixUri);
 		}
 	}
 	// Amendment: Import IRI mappings from xmlns
 	for(var i=0; i<node.attributes.length; i++){
 		var name = node.attributes[i].name;
 		if(name.substring(0, 6)=='xmlns:'){
-			rdfaContext.prefixes[name.substring(6)+':'] = node.attributes[i].value.trim();
+			rdfaContext.prefixes[name.substring(6)+':'] = rdfaContext.fromIRI(node.attributes[i].value.trim());
 		}
 	}
 
@@ -395,6 +396,7 @@ RDFaParser.prototype.processElement = function processElement(node){
 		}
 		if (setRel) {
 			rdfaContext.fromTERMorCURIEorAbsIRIs(setRel).forEach(function(predicate){
+				if(predicate.termType=='BlankNode') return;
 				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
 					rdfaContext.newSubject,
 					predicate,
@@ -404,6 +406,7 @@ RDFaParser.prototype.processElement = function processElement(node){
 		}
 		if (setRev) {
 			rdfaContext.fromTERMorCURIEorAbsIRIs(setRev).forEach(function(predicate){
+				if(predicate.termType=='BlankNode') return;
 				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
 					rdfaContext.currentObjectResource,
 					predicate,
@@ -437,15 +440,15 @@ RDFaParser.prototype.processElement = function processElement(node){
 		var datatypeIRI = typeof setDatatype=='string' ? rdfaContext.fromTERMorCURIEorAbsIRI(setDatatype) : setDatatype;
 		var propertyList = rdfaContext.fromTERMorCURIEorAbsIRIs(setProperty);
 		var currentPropertyValue = null;
-		if(typeof setDatatype=='string' && setDatatype && datatypeIRI!==XMLLiteralURI){
+		if(datatypeIRI && setDatatype && datatypeIRI!==XMLLiteralURI){
 			// 1: if @datatype is present and is not XMLLiteral 
 			if(typeof setContent=='string') currentPropertyValue = rdfaContext.rdfenv.createLiteral(setContent, null, datatypeIRI.toString());
 			else currentPropertyValue = rdfaContext.rdfenv.createLiteral(node.textContent, null, datatypeIRI.toString());
-		}else if(typeof setDatatype=='string' && setDatatype.trim()===''){
+		}else if(datatypeIRI && setDatatype.trim()===''){
 			// 2: if @datatype is present and empty
 			if(typeof setContent=='string') currentPropertyValue = rdfaContext.rdfenv.createLiteral(setContent, rdfaContext.language);
 			else currentPropertyValue = rdfaContext.rdfenv.createLiteral(node.textContent, rdfaContext.language);
-		}else if(typeof setDatatype=='string' && datatypeIRI===XMLLiteralURI){
+		}else if(datatypeIRI && datatypeIRI===XMLLiteralURI){
 			// 3: as an XML literal if @datatype is present and is set to XMLLiteral
 			// The value of the XML literal is a string created by serializing to text, all nodes that are descendants of the current element, i.e., not including the element itself, and giving it a datatype of XMLLiteral in the vocabulary http://www.w3.org/1999/02/22-rdf-syntax-ns#. The format of the resulting serialized content is as defined in Exclusive XML Canonicalization Version 1.0 [XML-EXC-C14N]
 			// @@@TODO: serialize XML to string
@@ -466,6 +469,7 @@ RDFaParser.prototype.processElement = function processElement(node){
 			throw new Error('Could not determine currentPropertyValue');
 		}
 		propertyList.forEach(function(predicate){
+			if(predicate.termType=='BlankNode') return;
 			self.outputGraph.add(rdfaContext.rdfenv.createTriple(
 				rdfaContext.newSubject,
 				predicate,
