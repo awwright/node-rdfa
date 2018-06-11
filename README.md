@@ -1,3 +1,4 @@
+
 # RDFa 
 
 A fairly compact, cross-platform, extensible module to extract RDF information from RDFa-enabled documents.
@@ -13,6 +14,23 @@ Goals:
 * Output a complete graph or "Statement" events
 * Support custom types of nodes (e.g. variables)
 * Query for DOM nodes by data they contain
+
+## Features
+
+### Parse a DOM tree into an RDF graph
+
+```javascript
+const rdfa = require('rdfa');
+const fs = require('fs');
+const DOMParser = require('xmldom').DOMParser;
+
+const filepath = './test/rdfa.github.io/test-suite/test-cases/rdfa1.1-lite/xhtml1/0021.xhtml';
+const document = new DOMParser().parseFromString(fs.readFileSync(filepath, 'UTF-8'), 'text/xml');
+const result = rdfa.parse('http://example.com/', document);
+result.outputGraph.forEach(function(n){ console.log(n.toTurtle()); });
+```
+
+    <http://example.com/> <http://purl.org/dc/elements/1.1/creator> "Mark Birbeck" .
 
 ## File index
 
@@ -41,4 +59,3 @@ Maintains state during processing of a document. Created by `parse`
 ### RDFaContext
 
 Represents an RDFa processing context that's generated during processing of an element and passed to child elements.
-
