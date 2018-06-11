@@ -444,7 +444,7 @@ RDFaParser.prototype.processElement = function processElement(node){
 			// 1: if @datatype is present and is not XMLLiteral 
 			if(typeof setContent=='string') currentPropertyValue = rdfaContext.rdfenv.createLiteral(setContent, null, datatypeIRI.toString());
 			else currentPropertyValue = rdfaContext.rdfenv.createLiteral(node.textContent, null, datatypeIRI.toString());
-		}else if(datatypeIRI && setDatatype.trim()===''){
+		}else if(typeof setDatatype=='string' && setDatatype.trim()===''){
 			// 2: if @datatype is present and empty
 			if(typeof setContent=='string') currentPropertyValue = rdfaContext.rdfenv.createLiteral(setContent, rdfaContext.language);
 			else currentPropertyValue = rdfaContext.rdfenv.createLiteral(node.textContent, rdfaContext.language);
