@@ -58,6 +58,7 @@ function generateCasesTtl(version, lang){
 
 			var document = new DOMParser().parseFromString(inputContents, 'text/xml');
 			var result = parse(inputURI, document);
+			var outputGraph = result.outputGraph;
 
 			var turtleParser = TurtleParser.parse(queryContents, inputURI);
 			var expectedGraph = turtleParser.graph;
@@ -67,7 +68,10 @@ function generateCasesTtl(version, lang){
 			var match = expectedGraph.equals(result.outputGraph);
 			//console.log(match);
 			if(!match){
-				assert.equal(result.outputGraph.toArray().sort().join("\n"), expectedGraph.toArray().sort().join("\n"));
+				assert.equal(
+					outputGraph.toArray().map(function(v){ return v.toString(); }).sort().join("\n"),
+					expectedGraph.toArray().map(function(v){ return v.toString(); }).sort().join("\n")
+				);
 				assert(match, 'Graphs are equal');
 			}
 		});

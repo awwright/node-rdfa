@@ -154,7 +154,7 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRI = function fromTERMorCURIEorAbsIRI
 		}else if(Object.hasOwnProperty.call(ctx.termsDefault, str)){
 			console.error('Assumed IRI for term '+str+' = <'+ctx.prefixesDefault[proto]+'>');
 			return ctx.rdfenv.createNamedNode(ctx.termsDefault[str]);
-		}else if(str){
+		}else if(ctx.vocabulary && str){
 			return ctx.rdfenv.createNamedNode(ctx.vocabulary + str);
 		}else{
 			return null;
@@ -238,7 +238,9 @@ RDFaParser.prototype.processElement = function processElement(node){
 	}
 	
 	// Step 2. set default vocab
-	if(typeof setVocab=='string') var vocabIRI = rdfaContext.fromIRI(setVocab);
+	if(typeof setVocab=='string' && setVocab.trim().length){
+		var vocabIRI = rdfaContext.fromIRI(setVocab);
+	}
 	if(vocabIRI){
 		// TODO emit UsesVocab
 		this.outputGraph.add(rdfaContext.rdfenv.createTriple(
