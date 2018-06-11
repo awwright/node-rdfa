@@ -154,6 +154,8 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRI = function fromTERMorCURIEorAbsIRI
 		}else if(Object.hasOwnProperty.call(ctx.termsDefault, str)){
 			console.error('Assumed IRI for term '+str+' = <'+ctx.prefixesDefault[proto]+'>');
 			return ctx.rdfenv.createNamedNode(ctx.termsDefault[str]);
+		}else if(str){
+			return ctx.rdfenv.createNamedNode(ctx.vocabulary + str);
 		}else{
 			return null;
 		}
