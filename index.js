@@ -1,12 +1,12 @@
 
 // Phase 1. Support RDFa lite attributes: vocab, typeof, property, resource, and prefix
 
-var RDF = require('rdf');
+var rdf = require('rdf');
 var IRI = require('iri');
 
 var defaults = require('./defaults.json');
 
-var rdfaNS = RDF.ns('http://www.w3.org/ns/rdfa#');
+var rdfaNS = rdf.ns('http://www.w3.org/ns/rdfa#');
 
 var console = module.exports.console = { log: function(){}, error: function(){}, };
 
@@ -27,14 +27,14 @@ function RDFaContext(base, node){
 	this.depth = 0;
 	this.base = base;
 	this.node = node;
-	this.rdfenv = RDF.environment;
+	this.rdfenv = rdf.environment;
 	this.bm = null; // bnode map
 	// RDFa context
 	this.parentContext = null;
 	this.parentSubject = this.rdfenv.createNamedNode(base);
 	this.parentObject = null;
 	this.pendingincomplete = [];
-	this.listMapping = [];
+	this.listMapping = {};
 	this.language = null;
 	this.prefixes = {};
 	this.prefixesDefault = defaults.context;
@@ -46,6 +46,7 @@ function RDFaContext(base, node){
 	this.skipElement = true;
 	this.currentObjectResource = null;
 	this.newSubject = null;
+	this.localListMapping = {};
 	this.incomplete = [];
 }
 RDFaContext.prototype.child = function child(node){
@@ -76,6 +77,7 @@ RDFaContext.prototype.child = function child(node){
 		ctx.prefixes = {};
 		for(var n in this.prefixes) ctx.prefixes[n] = this.prefixes[n];
 		ctx.pendingincomplete = this.incomplete;
+		ctx.listMapping = this.localListMapping;
 		ctx.language = this.language;
 		ctx.vocabulary = this.vocabulary;
 	}
@@ -184,7 +186,7 @@ function RDFaParser(base, documentElement){
 	this.documentElement = documentElement;
 	this.stack = [];
 	this.queries = [];
-	this.rdfenv = RDF.environment;
+	this.rdfenv = rdf.environment;
 	this.outputGraph = this.rdfenv.createGraph();
 	this.processorGraph = this.rdfenv.createGraph();
 	var ctx = new RDFaContext(base, null);
@@ -387,14 +389,15 @@ RDFaParser.prototype.processElement = function processElement(node){
 	}
 	// Step 8
 	if(rdfaContext.newSubject && rdfaContext.newSubject.toString()!=rdfaContext.parentObject.toString()){
-		rdfaContext.listMapping = [];
+		rdfaContext.listMapping = {};
 	}
 	// Step 9.
 	if(rdfaContext.currentObjectResource){
 		if(typeof setInlist=='string' && typeof setRel=='string'){
-			// TODO 9.1
-		}
-		if (setRel) {
+			rdfaContext.fromTERMorCURIEorAbsIRIs(setRel).forEach(function(predicate){
+				rdfaContext.localListMapping[predicate] = [ rdfaContext.currentObjectResource ];
+			});
+		}else if (setRel) {
 			rdfaContext.fromTERMorCURIEorAbsIRIs(setRel).forEach(function(predicate){
 				if(predicate.termType=='BlankNode') return;
 				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
@@ -423,7 +426,10 @@ RDFaParser.prototype.processElement = function processElement(node){
 			rdfaContext.currentObjectResource = rdfaContext.rdfenv.createBlankNode();
 		}
 		if(typeof setRel=='string' && typeof setInlist=='string'){
-			throw new Error('inlist not implemented');
+			rdfaContext.fromTERMorCURIEorAbsIRIs(setRel).forEach(function(predicate){
+				rdfaContext.localListMapping[predicate] = [];
+				rdfaContext.incomplete.push({direction:0, list:rdfaContext.localListMapping[predicate]});
+			});
 		}else if(typeof setRel=='string'){
 			rdfaContext.fromTERMorCURIEorAbsIRIs(setRel).forEach(function(predicate){
 				rdfaContext.incomplete.push({direction:+1, predicate:predicate});
@@ -470,11 +476,15 @@ RDFaParser.prototype.processElement = function processElement(node){
 		}
 		propertyList.forEach(function(predicate){
 			if(predicate.termType=='BlankNode') return;
-			self.outputGraph.add(rdfaContext.rdfenv.createTriple(
-				rdfaContext.newSubject,
-				predicate,
-				currentPropertyValue
-			));
+			if(setInlist){
+				rdfaContext.localListMapping[predicate].push(rdfaContext.currentPropertyValue);
+			}else{
+				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+					rdfaContext.newSubject,
+					predicate,
+					currentPropertyValue
+				));
+			}
 		});
 	}
 
@@ -494,6 +504,8 @@ RDFaParser.prototype.processElement = function processElement(node){
 					statement.predicate,
 					rdfaContext.parentSubject
 				));
+			}else if(statement.list){
+				statement.list.push(rdfaContext.newSubject);
 			}else{
 				throw new Error('Unknown direction');
 			}
@@ -502,6 +514,35 @@ RDFaParser.prototype.processElement = function processElement(node){
 
 	// Step 13. Process child elements (performed after this function returns)
 	// Step 14. @@@TODO generate local list mapping
+	for(var prop in rdfaContext.localListMapping){
+		// only process lists that were created in the current context
+		if(rdfaContext.listMapping[prop]) return;
+		var list = rdfaContext.localListMapping[prop];
+		if(list.length == 0){
+			self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+				rdfaContext.parentSubject,
+				prop,
+				rdf.rdfns('nil')
+			));
+		}else{
+			var first = rdfaContext.parentSubject;
+			var rest = rdfaContext.rdfenv.createBlankNode();
+			rdfaContext.localListMapping[prop].forEach(function(item, i){
+				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+					rest,
+					rdf.rdfns('first'),
+					first
+				));
+				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+					rest,
+					rdf.rdfns('rest'),
+					(i==list.length-1) ? rdf.rdfns('nil') : rest
+				));
+				rest = first;
+				first = rdfaContext.rdfenv.createBlankNode();
+			});
+		}
+	}
 }
 
 RDFaParser.prototype.processText = function processText(){
