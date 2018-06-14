@@ -27,7 +27,7 @@ function RDFaContext(parser, node){
 	this.parser = parser;
 	this.base = parser.base;
 	this.node = node;
-	this.rdfenv = rdf.environment;
+	this.rdfenv = parser.rdfenv;
 	this.bm = null; // bnode map
 	// RDFa context
 	this.parentContext = null;
@@ -503,11 +503,13 @@ RDFaParser.prototype.processElement = function processElement(node){
 		}else if(typeof setContent=='string'){
 			datatypeIRI = XSDString;
 			currentPropertyValue = rdfaContext.rdfenv.createLiteral(setContent, rdfaContext.language);
-		}else if(typeof setRel!='string' && typeof setRev!='string' && typeof setContent!='string'){
+		}else if((resourceIRI || setHref || setSrc) && typeof setRel!='string' && typeof setRev!='string' && typeof setContent!='string'){
 			if(resourceIRI) currentPropertyValue = resourceIRI;
 			else if(typeof setHref=='string') currentPropertyValue = rdfaContext.fromIRI(setHref);
 			else if(typeof setSrc=='string') currentPropertyValue = rdfaContext.fromIRI(setSrc);
-			else currentPropertyValue = rdfaContext.rdfenv.createLiteral(node.textContent, rdfaContext.language);
+		}else if(typedResource && !aboutIRI){
+			// Spec says "if @typeof is present" but it probably really means typed_resource?
+			currentPropertyValue = typedResource;
 		}else{
 			currentPropertyValue = rdfaContext.rdfenv.createLiteral(node.textContent, rdfaContext.language);
 		}
