@@ -7,8 +7,7 @@ var IRI = require('iri');
 var defaults = require('./defaults.json');
 
 var rdfaNS = rdf.ns('http://www.w3.org/ns/rdfa#');
-
-var console = module.exports.console = { log: function(){}, error: function(){}, };
+var dcNS = rdf.ns('http://purl.org/dc/terms/');
 
 const StringLiteralURI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral";
 const XMLLiteralURI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral";
@@ -22,16 +21,17 @@ function tokenize(s){
 }
 
 module.exports.RDFaContext = RDFaContext;
-function RDFaContext(base, node){
+function RDFaContext(parser, node){
 	// Settings
 	this.depth = 0;
-	this.base = base;
+	this.parser = parser;
+	this.base = parser.base;
 	this.node = node;
 	this.rdfenv = rdf.environment;
 	this.bm = null; // bnode map
 	// RDFa context
 	this.parentContext = null;
-	this.parentSubject = this.rdfenv.createNamedNode(base);
+	this.parentSubject = this.rdfenv.createNamedNode(parser.base);
 	this.parentObject = null;
 	this.pendingincomplete = [];
 	this.listMapping = {};
@@ -50,7 +50,7 @@ function RDFaContext(base, node){
 	this.incomplete = [];
 }
 RDFaContext.prototype.child = function child(node){
-	var ctx = new RDFaContext(this.base, node);
+	var ctx = new RDFaContext(this.parser, this.base, node);
 	ctx.rdfenv = this.rdfenv;
 	ctx.bm = this.bm;
 	ctx.parentContext = this;
@@ -111,7 +111,7 @@ RDFaContext.prototype.fromSafeCURIEorCURIEorIRI = function fromSafeCURIEorCURIEo
 		}else if(proto && Object.hasOwnProperty.call(ctx.prefixes, proto)){
 			return this.rdfenv.createNamedNode(ctx.prefixes[proto] + str.substring(iproto+1));
 		}else if(proto && Object.hasOwnProperty.call(ctx.prefixesDefault, proto)){
-			console.error('Assumed prefix for '+proto+' = <'+ctx.prefixesDefault[proto]+'>');
+			this.parser.warning('Assumed prefix for '+proto+' = <'+ctx.prefixesDefault[proto]+'>');
 			return this.rdfenv.createNamedNode(ctx.prefixesDefault[proto] + str.substring(iproto+1));
 		}else{
 			return this.rdfenv.createNamedNode(new IRI.IRI(ctx.base).resolveReference(iriref).toString());
@@ -130,7 +130,7 @@ RDFaContext.prototype.fromCURIE = function fromCURIE(str){
 	}else if(Object.hasOwnProperty.call(ctx.prefixes, proto)){
 		return this.rdfenv.createNamedNode(ctx.prefixes[proto] + str.substring(iproto+1));
 	}else if(Object.hasOwnProperty.call(ctx.prefixesDefault, proto)){
-		console.error('Assumed prefix for '+proto+' = <'+ctx.prefixesDefault[proto]+'>');
+		this.parser.warning('Assumed prefix for '+proto+' = <'+ctx.prefixesDefault[proto]+'>');
 		return this.rdfenv.createNamedNode(ctx.prefixesDefault[proto] + str.substring(iproto+1));
 	}else{
 		throw new Error('CURIE not found');
@@ -152,7 +152,7 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRI = function fromTERMorCURIEorAbsIRI
 		if(Object.hasOwnProperty.call(ctx.terms, str)){
 			return ctx.rdfenv.createNamedNode(ctx.terms[str]);
 		}else if(Object.hasOwnProperty.call(ctx.termsDefault, str)){
-			console.error('Assumed IRI for term '+str+' = <'+ctx.prefixesDefault[proto]+'>');
+			this.parser.warning('Assumed IRI for term '+str+' = <'+ctx.prefixesDefault[proto]+'>');
 			return ctx.rdfenv.createNamedNode(ctx.termsDefault[str]);
 		}else if(ctx.vocabulary && str){
 			return ctx.rdfenv.createNamedNode(ctx.vocabulary + str);
@@ -167,7 +167,7 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRI = function fromTERMorCURIEorAbsIRI
 		}else if(Object.hasOwnProperty.call(ctx.prefixes, proto)){
 			return ctx.rdfenv.createNamedNode(ctx.prefixes[proto] + str.substring(iproto+1));
 		}else if(Object.hasOwnProperty.call(ctx.prefixesDefault, proto)){
-			console.error('Assumed prefix for '+proto+' = <'+ctx.prefixesDefault[proto]+'>');
+			this.parser.warning('Assumed prefix for '+proto+' = <'+ctx.prefixesDefault[proto]+'>');
 			return ctx.rdfenv.createNamedNode(ctx.prefixesDefault[proto] + str.substring(iproto+1));
 		}else{
 			return ctx.rdfenv.createNamedNode(str);
@@ -184,15 +184,14 @@ RDFaContext.prototype.fromTERMorCURIEorAbsIRIs = function fromTERMorCURIEorAbsIR
 
 module.exports.RDFaParser = RDFaParser;
 function RDFaParser(base, documentElement){
-	this.base = '';
+	this.base = base;
 	this.documentElement = documentElement;
 	this.stack = [];
 	this.queries = [];
 	this.rdfenv = rdf.environment;
 	this.outputGraph = this.rdfenv.createGraph();
 	this.processorGraph = this.rdfenv.createGraph();
-	var ctx = new RDFaContext(base, null);
-	ctx.rdfenv = this.rdfenv;
+	var ctx = new RDFaContext(this, null);
 	ctx.bm = {};
 	ctx.skipElement = true;
 	// RDFa the 'default prefix' mapping is the XHTML NS
@@ -201,6 +200,39 @@ function RDFaParser(base, documentElement){
 	ctx.parentObject = this.rdfenv.createNamedNode(ctx.base);
 	ctx.newSubject = this.rdfenv.createNamedNode(ctx.base);
 	this.stack.push(ctx);
+}
+
+RDFaParser.prototype.log = function log(message){
+	if(this.console) this.console.log.apply(console, arguments);
+	var event = this.rdfenv.createBlankNode();
+	this.processorGraph.add(this.rdfenv.createTriple(
+		event, rdf.rdfns('type'), rdfaNS('Info')
+	));
+	this.processorGraph.add(this.rdfenv.createTriple(
+		event, dcNS('description'), this.rdfenv.createLiteral(message.toString())
+	));
+}
+
+RDFaParser.prototype.warning = function warning(message){
+	if(this.console) this.console.error.apply(console, arguments);
+	var event = this.rdfenv.createBlankNode();
+	this.processorGraph.add(this.rdfenv.createTriple(
+		event, rdf.rdfns('type'), rdfaNS('Warning')
+	));
+	this.processorGraph.add(this.rdfenv.createTriple(
+		event, dcNS('description'), this.rdfenv.createLiteral(message.toString())
+	));
+}
+
+RDFaParser.prototype.error = function error(message){
+	if(this.console) this.console.error.apply(console, arguments);
+	var event = this.rdfenv.createBlankNode();
+	this.processorGraph.add(this.rdfenv.createTriple(
+		event, rdf.rdfns('type'), rdfaNS('Error')
+	));
+	this.processorGraph.add(this.rdfenv.createTriple(
+		event, dcNS('description'), this.rdfenv.createLiteral(message.toString())
+	));
 }
 
 RDFaParser.prototype.processDocument = function processDocument(node){
@@ -563,6 +595,7 @@ RDFaParser.prototype.processNodeEnd = function processElementEnd(){
 
 module.exports.parse = parse;
 function parse(base, document, options){
+	var self = this;
 	if(typeof base!=='string') throw new Error('Expected `base` to be a string');
 	if(typeof document!=='object') throw new Error('Unexpected argument');
 	if(typeof options==='object'){
@@ -585,7 +618,7 @@ function parse(base, document, options){
 		str += ' language=' + JSON.stringify(rdfaContext.language);
 		//str += ' prefixes=' + JSON.stringify(rdfaContext.prefixes);
 		str += ' parentObject=' + JSON.stringify(rdfaContext.parentObject);
-		console.log(str);
+		//console.log(str);
 	}
 
 	// Visit each element recursively
@@ -609,7 +642,7 @@ function parse(base, document, options){
 			print('// '+node.data);
 		}else{
 			print('other');
-			console.log(node);
+			self.log(node);
 		}
 		// Visit the next element recursively
 		// If there's a child, visit that
