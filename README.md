@@ -6,7 +6,9 @@ A fairly compact, cross-platform, extensible module to extract RDF information f
 Features:
 
 * Sometimes extracts RDF statements
-* Passes more than half of many sections of the RDFa test suite
+* Passes all compliant XML tests
+* Walks DOM tree to generate an RDF graph
+* Extensible design for parsing supersets of RDFa and supporting new media types
 
 Goals:
 
