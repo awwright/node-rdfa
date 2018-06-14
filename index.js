@@ -235,6 +235,10 @@ RDFaParser.prototype.error = function error(message){
 	));
 }
 
+RDFaParser.prototype.emit = function emit(s, p, o){
+	this.outputGraph.add(this.rdfenv.createTriple(s, p, o));
+}
+
 RDFaParser.prototype.processDocument = function processDocument(node){
 	var self = this;
 	var rdfaContext = self.stack[self.stack.length-1].child(node);
@@ -275,11 +279,11 @@ RDFaParser.prototype.processElement = function processElement(node){
 	}
 	if(vocabIRI){
 		// TODO emit UsesVocab
-		this.outputGraph.add(rdfaContext.rdfenv.createTriple(
+		this.emit(
 			rdfaContext.rdfenv.createNamedNode(rdfaContext.base),
 			rdfaNS('usesVocabulary'),
 			vocabIRI
-		));
+		);
 		rdfaContext.vocabulary = vocabIRI;
 	}else if(setVocab===""){
 		rdfaContext.vocabulary = null;
@@ -421,11 +425,11 @@ RDFaParser.prototype.processElement = function processElement(node){
 	// Step 7. Type resources
 	if(typedResource && typeof setTypeof=='string'){
 		rdfaContext.fromTERMorCURIEorAbsIRIs(setTypeof).forEach(function(type){
-			self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+			self.emit(
 				typedResource,
 				rdfaContext.rdfenv.createNamedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'),
 				type
-			));
+			);
 		});
 	}
 	// Step 8
@@ -441,21 +445,21 @@ RDFaParser.prototype.processElement = function processElement(node){
 		}else if (setRel) {
 			rdfaContext.fromTERMorCURIEorAbsIRIs(setRel).forEach(function(predicate){
 				if(predicate.termType=='BlankNode') return;
-				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+				self.emit(
 					rdfaContext.newSubject,
 					predicate,
 					rdfaContext.currentObjectResource
-				));				
+				);
 			});
 		}
 		if (setRev) {
 			rdfaContext.fromTERMorCURIEorAbsIRIs(setRev).forEach(function(predicate){
 				if(predicate.termType=='BlankNode') return;
-				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+				self.emit(
 					rdfaContext.currentObjectResource,
 					predicate,
 					rdfaContext.newSubject
-				));
+				);
 			});
 		}
 	}else{
@@ -522,11 +526,11 @@ RDFaParser.prototype.processElement = function processElement(node){
 			if(setInlist){
 				rdfaContext.localListMapping[predicate].push(rdfaContext.currentPropertyValue);
 			}else{
-				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+				self.emit(
 					rdfaContext.newSubject,
 					predicate,
 					currentPropertyValue
-				));
+				);
 			}
 		});
 	}
@@ -536,17 +540,17 @@ RDFaParser.prototype.processElement = function processElement(node){
 		rdfaContext.pendingincomplete.forEach(function(statement){
 			// If `direction` is 'none' then... what? We don't have a 'none' direction
 			if(statement.direction===1){
-				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+				self.emit(
 					rdfaContext.parentSubject,
 					statement.predicate,
 					rdfaContext.newSubject
-				));
+				);
 			}else if(statement.direction===-1){
-				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+				self.emit(
 					rdfaContext.newSubject,
 					statement.predicate,
 					rdfaContext.parentSubject
-				));
+				);
 			}else if(statement.list){
 				statement.list.push(rdfaContext.newSubject);
 			}else{
@@ -562,25 +566,25 @@ RDFaParser.prototype.processElement = function processElement(node){
 		if(rdfaContext.listMapping[prop]) return;
 		var list = rdfaContext.localListMapping[prop];
 		if(list.length == 0){
-			self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+			self.emit(
 				rdfaContext.parentSubject,
 				prop,
 				rdf.rdfns('nil')
-			));
+			);
 		}else{
 			var first = rdfaContext.parentSubject;
 			var rest = rdfaContext.rdfenv.createBlankNode();
 			rdfaContext.localListMapping[prop].forEach(function(item, i){
-				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+				self.emit(
 					rest,
 					rdf.rdfns('first'),
 					first
-				));
-				self.outputGraph.add(rdfaContext.rdfenv.createTriple(
+				);
+				self.emit(
 					rest,
 					rdf.rdfns('rest'),
 					(i==list.length-1) ? rdf.rdfns('nil') : rest
-				));
+				);
 				rest = first;
 				first = rdfaContext.rdfenv.createBlankNode();
 			});
