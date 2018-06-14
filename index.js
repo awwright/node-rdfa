@@ -308,10 +308,15 @@ RDFaParser.prototype.processElement = function processElement(node){
 			// If @typeof is present then typed resource is set to the resource obtained from the first match from the following rules:
 			if(typeof setTypeof=='string'){
 				if(aboutIRI) typedResource = aboutIRI;
-				else if(resourceIRI) typedResource = resourceIRI;
-				else if(typeof setHref=='string') typedResource = rdfaContext.fromIRI(setHref);
-				else if(typeof setSrc=='string') typedResource = rdfaContext.fromIRI(setSrc);
-				else typedResource = rdfaContext.rdfenv.createBlankNode();
+				else {
+					// "otherwise"
+					if(resourceIRI) typedResource = resourceIRI;
+					else if(typeof setHref=='string') typedResource = rdfaContext.fromIRI(setHref);
+					else if(typeof setSrc=='string') typedResource = rdfaContext.fromIRI(setSrc);
+					else typedResource = rdfaContext.rdfenv.createBlankNode();
+					// typeof on an object sets currentObjectResource
+					rdfaContext.currentObjectResource = typedResource;
+				}
 			}
 		}else{
 			// Step 5.2.
