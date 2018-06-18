@@ -7,3 +7,4 @@ exports.RDFaParser = require('./lib/core.js').RDFaParser;
 
 exports.RDFaCoreParser = require('./lib/core.js').RDFaCoreParser;
 exports.RDFaXMLParser = require('./lib/host-xml.js').RDFaXMLParser;
+exports.RDFaXHTMLParser = require('./lib/host-xhtml.js').RDFaXHTMLParser;

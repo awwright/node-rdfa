@@ -16,6 +16,8 @@ var rdfenv = require('rdf').environment;
 var manifestPath = __dirname + '/rdfa.github.io/test-suite/manifest.jsonld';
 
 var parse = require('./../index.js').parse;
+var RDFaXMLParser = require('./../index.js').RDFaXMLParser;
+var RDFaXHTMLParser = require('./../index.js').RDFaXHTMLParser;
 
 var fs = require('fs');
 var manifestJSON = fs.readFileSync(manifestPath);
@@ -23,8 +25,8 @@ var manifest = JSON.parse(manifestJSON);
 var cases = manifest['@graph'];
 
 describe('rdfa.info Test Suite', function(){
-	describe('rdfa1.1/xml', function(){ generateCasesTtl('rdfa1.1', 'xml'); });
-	describe('rdfa1.1/xhtml5', function(){ generateCasesTtl('rdfa1.1', 'xhtml5'); });
+	describe('rdfa1.1/xml', function(){ generateCasesTtl('rdfa1.1', 'xml', RDFaXMLParser); });
+	describe('rdfa1.1/xhtml5', function(){ generateCasesTtl('rdfa1.1', 'xhtml5', RDFaXHTMLParser); });
 });
 
 var suffixMap = {
@@ -38,7 +40,7 @@ var suffixMap = {
 
 var TCPATH = 'http://rdfa.info/test-suite/test-cases/';
 
-function generateCasesTtl(version, lang){
+function generateCasesTtl(version, lang, Parser){
 	cases
 		.filter(function(v){ return v.expectedResults && v.hostLanguages.indexOf(lang)>=0 && v.versions.indexOf(version)>=0; })
 		.forEach(function(test){
@@ -50,7 +52,7 @@ function generateCasesTtl(version, lang){
 			var inputURI = TCPATH+''+version+'/'+lang+'/'+test.num+'.'+suffixMap[lang];
 
 			var document = new DOMParser().parseFromString(inputContents, 'text/xml');
-			var result = parse(inputURI, document);
+			var result = Parser.parse(inputURI, document);
 			var outputGraph = result.outputGraph;
 
 			var turtleParser = TurtleParser.parse(queryContents, inputURI);
