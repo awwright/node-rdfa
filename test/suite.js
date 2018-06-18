@@ -23,15 +23,8 @@ var manifest = JSON.parse(manifestJSON);
 var cases = manifest['@graph'];
 
 describe('rdfa.info Test Suite', function(){
-	//describe('rdfa1.1-lite/xml', function(){ generateCases('rdfa1.1', 'xml'); });
-	//describe('rdfa1.1/xml', function(){ generateCases('rdfa1.1', 'xml'); });
-	//describe('rdfa1.1-lite/xhtml5', function(){ generateCases('rdfa1.1-lite', 'xhtml5'); });
-	//describe('rdfa1.1/xhtml5', function(){ generateCases('rdfa1.1', 'xhtml5'); });
-
-	//describe('rdfa1.1-lite/xml', function(){ generateCasesTtl('rdfa1.1', 'xml'); });
 	describe('rdfa1.1/xml', function(){ generateCasesTtl('rdfa1.1', 'xml'); });
-	//describe('rdfa1.1-lite/xhtml5', function(){ generateCasesTtl('rdfa1.1-lite', 'xhtml5'); });
-	//describe('rdfa1.1/xhtml5', function(){ generateCasesTtl('rdfa1.1', 'xhtml5'); });
+	describe('rdfa1.1/xhtml5', function(){ generateCasesTtl('rdfa1.1', 'xhtml5'); });
 });
 
 var suffixMap = {
