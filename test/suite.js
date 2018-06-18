@@ -26,6 +26,7 @@ var cases = manifest['@graph'];
 
 describe('rdfa.info Test Suite', function(){
 	describe('rdfa1.1/xml', function(){ generateCasesTtl('rdfa1.1', 'xml', RDFaXMLParser); });
+	describe('rdfa1.1/xhtml1', function(){ generateCasesTtl('rdfa1.1', 'xhtml1', RDFaXHTMLParser); });
 	describe('rdfa1.1/xhtml5', function(){ generateCasesTtl('rdfa1.1', 'xhtml5', RDFaXHTMLParser); });
 });
 
