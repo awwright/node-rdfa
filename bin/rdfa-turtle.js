@@ -1,7 +1,7 @@
 
 var files = process.argv.slice(2);
 
-var parse = require('./../index.js').parse;
+var parse = require('./../index.js').RDFaXMLParser.parse;
 
 var fs = require('fs');
 var DOMParser = require('xmldom').DOMParser;

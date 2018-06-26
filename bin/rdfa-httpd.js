@@ -2,7 +2,7 @@
 // Downloads an RDFa document and returns a list of triples from that document.
 // Use <http://localhost:8080/?uri=>
 
-var parse = require('../index.js').parse;
+var parse = require('../index.js').RDFaXMLParser.parse;
 var fs = require('fs');
 var path = require('path');
 var http = require('http');
