@@ -42,6 +42,11 @@ var parserMap = {
 };
 var TCPATH = 'http://rdfa.info/test-suite/test-cases/';
 
+var skipTests = [
+	'0295', // Ignore the one weird test that doesn't seem to have the correct triples listed
+	'0304', // Embedded RDFXML isn't RDFa, maybe later test if we can hand over elements to an RDFXML parser
+];
+
 describe('rdfa.info Test Suite', function(){
 	describe('rdfa1.1/xml', function(){ generateCasesTtl('rdfa1.1', 'xml'); });
 	describe('rdfa1.1/xhtml1', function(){ generateCasesTtl('rdfa1.1', 'xhtml1'); });
@@ -55,7 +60,7 @@ function generateCasesTtl(version, lang){
 		.filter(function(v){ return v.expectedResults && v.hostLanguages.indexOf(lang)>=0 && v.versions.indexOf(version)>=0; })
 		.forEach(function(test){
 		it(test.num+' '+test.description, function(){
-			if(test.num==295) return void this.skip(); // Ignore the one weird test that doesn't seem to have the correct triples listed
+			if(skipTests.indexOf(test.num)>=0) return void this.skip();
 			var queryFilename = __dirname+'/rdfa.github.io/test-suite/test-cases/'+version+'/'+lang+'/'+test.num+'.ttl';
 			var queryContents = fs.readFileSync(queryFilename, 'UTF-8');
 			var inputFilename = __dirname+'/rdfa.github.io/test-suite/test-cases/'+version+'/'+lang+'/'+test.num+'.'+suffix;
