@@ -16,6 +16,15 @@ Goals:
 * Output a complete graph or "Statement" events
 * Support custom types of nodes (e.g. variables)
 * Query for DOM nodes by data they contain
+* Linting of RDFa documents for:
+	* check property order
+	* reverse/forward incompatability
+	* shadowed definitions
+	* defining over registered URI schemes
+	* non-normalized IRI references
+	* Invalid IRIs
+	* Invalid CURIEs
+	* Term is used without an active vocabulary
 
 ## Features
 
@@ -28,7 +37,7 @@ const DOMParser = require('xmldom').DOMParser;
 
 const filepath = './test/rdfa.github.io/test-suite/test-cases/rdfa1.1-lite/xhtml1/0021.xhtml';
 const document = new DOMParser().parseFromString(fs.readFileSync(filepath, 'UTF-8'), 'text/xml');
-const result = rdfa.parse('http://example.com/', document);
+const result = rdfa.parseDOM(rdfa.RDFaXMLParser, 'http://example.com/', document);
 result.outputGraph.forEach(function(n){ console.log(n.toTurtle()); });
 ```
 
@@ -42,21 +51,30 @@ result.outputGraph.forEach(function(n){ console.log(n.toTurtle()); });
 * index.js - the bulk of the logic
 * test/suite.js - runs the library against a local copy of the RDFa test suite
 
+
 ## API
 
-### parse(base, document)
+### parseDOM(Processor, base, document, options)
 
 Extracts RDF statements out of a DOM document `document`, assuming a URI base `base` (always ignoring the URI in the DOM node, if any).
 
-Returns an object with the properties:
+Returns an RDFaParser instance (see below).
 
-* parser - instance of the RDFaParser instance that was created
-* outputGraph - instance of [RDF.Graph](https://github.com/awwright/node-rdf#graph)
-* processorGraph - instance of [RDF.Graph](https://github.com/awwright/node-rdf#graph)
+* base: the URI base for the document (where the document was downloaded from)
+* document: DOM document
+* options: object with additional configuration
+	* forceVersion: RDFa version to use. This is normally detected.
+	* defaultLanguage: default language for when no language is specified by the document (use the language specified in the `Content-Language` header, if any)
+
+
 
 ### RDFaParser
 
-Maintains state during processing of a document. Created by `parse`
+* outputGraph - instance of [RDF.Graph](https://github.com/awwright/node-rdf#graph)
+* processorGraph - instance of [RDF.Graph](https://github.com/awwright/node-rdf#graph)
+
+Maintains state during processing of a document. Created by `parseDOM`.
+
 
 ### RDFaContext
 

@@ -4,10 +4,9 @@ var util = require('util');
 var fs = require('fs');
 var assert = require('assert');
 
-//var st = require('rdfstore');
+var rdfenv = require('rdf').environment;
 var DOMParser = require('xmldom').DOMParser;
 var TurtleParser = require('rdf').TurtleParser;
-var rdfenv = require('rdf').environment;
 
 /**
  * Runs the JSON Schema Test Suite
@@ -15,20 +14,15 @@ var rdfenv = require('rdf').environment;
 
 var manifestPath = __dirname + '/rdfa.github.io/test-suite/manifest.jsonld';
 
-var parse = require('./../index.js').parse;
-var RDFaXMLParser = require('./../index.js').RDFaXMLParser;
-var RDFaXHTMLParser = require('./../index.js').RDFaXHTMLParser;
+var parseDOM = require('./../').parseDOM;
+var RDFaXMLParser = require('./../').RDFaXMLParser;
+var RDFaXHTMLParser = require('./../').RDFaXHTMLParser;
+var RDFaHTMLParser = require('./../').RDFaHTMLParser;
 
 var fs = require('fs');
 var manifestJSON = fs.readFileSync(manifestPath);
 var manifest = JSON.parse(manifestJSON);
 var cases = manifest['@graph'];
-
-describe('rdfa.info Test Suite', function(){
-	describe('rdfa1.1/xml', function(){ generateCasesTtl('rdfa1.1', 'xml', RDFaXMLParser); });
-	describe('rdfa1.1/xhtml1', function(){ generateCasesTtl('rdfa1.1', 'xhtml1', RDFaXHTMLParser); });
-	//describe('rdfa1.1/xhtml5', function(){ generateCasesTtl('rdfa1.1', 'xhtml5', RDFaHTMLParser); });
-});
 
 var suffixMap = {
 	xhtml1: "xhtml",
@@ -38,10 +32,25 @@ var suffixMap = {
 	svg: "svg",
 	xml: "xml",
 };
-
+var parserMap = {
+	xhtml1: RDFaXHTMLParser,
+	xhtml5: RDFaXHTMLParser,
+	html4: RDFaHTMLParser,
+	html5: RDFaHTMLParser,
+	svg: RDFaXMLParser,
+	xml: RDFaXMLParser,
+};
 var TCPATH = 'http://rdfa.info/test-suite/test-cases/';
 
-function generateCasesTtl(version, lang, Parser){
+describe('rdfa.info Test Suite', function(){
+	describe('rdfa1.1/xml', function(){ generateCasesTtl('rdfa1.1', 'xml'); });
+	describe('rdfa1.1/xhtml1', function(){ generateCasesTtl('rdfa1.1', 'xhtml1'); });
+	//describe('rdfa1.1/xhtml5', function(){ generateCasesTtl('rdfa1.1', 'xhtml5'); });
+});
+
+function generateCasesTtl(version, lang){
+	var suffix = suffixMap[lang];
+	var Parser = parserMap[lang];
 	cases
 		.filter(function(v){ return v.expectedResults && v.hostLanguages.indexOf(lang)>=0 && v.versions.indexOf(version)>=0; })
 		.forEach(function(test){
@@ -49,12 +58,12 @@ function generateCasesTtl(version, lang, Parser){
 			if(test.num==295) return void this.skip(); // Ignore the one weird test that doesn't seem to have the correct triples listed
 			var queryFilename = __dirname+'/rdfa.github.io/test-suite/test-cases/'+version+'/'+lang+'/'+test.num+'.ttl';
 			var queryContents = fs.readFileSync(queryFilename, 'UTF-8');
-			var inputFilename = __dirname+'/rdfa.github.io/test-suite/test-cases/'+version+'/'+lang+'/'+test.num+'.'+suffixMap[lang];
+			var inputFilename = __dirname+'/rdfa.github.io/test-suite/test-cases/'+version+'/'+lang+'/'+test.num+'.'+suffix;
 			var inputContents = fs.readFileSync(inputFilename, 'UTF-8');
-			var inputURI = TCPATH+''+version+'/'+lang+'/'+test.num+'.'+suffixMap[lang];
+			var inputURI = TCPATH+''+version+'/'+lang+'/'+test.num+'.'+suffix;
 
 			var document = new DOMParser().parseFromString(inputContents, 'text/xml');
-			var result = Parser.parse(inputURI, document);
+			var result = parseDOM(Parser, inputURI, document, {rdfenv:rdfenv});
 			var outputGraph = result.outputGraph;
 
 			var turtleParser = TurtleParser.parse(queryContents, inputURI);
