@@ -41,7 +41,28 @@ const result = rdfa.parseDOM(rdfa.RDFaXMLParser, 'http://example.com/', document
 result.outputGraph.forEach(function(n){ console.log(n.toTurtle()); });
 ```
 
-    <http://example.com/> <http://purl.org/dc/elements/1.1/creator> "Mark Birbeck" .
+	<http://example.com/> <http://purl.org/dc/elements/1.1/creator> "Mark Birbeck" .
+
+
+### Support for standards-based XML parsers
+
+There is no included document parser, instead supports reading from a DOM (W3C or compatible), or a SAX-like event stream.
+
+Tests are written for the following packages:
+
+* http://npmjs.com/package/xmldom
+
+
+### Support for different media types
+
+Supports plain XML, HTML, and SVG out-of-the-box, and is extendible for new host languages.
+
+Supported host languages:
+
+* RDFaXMLParser - for plain XML documents
+* RDFaXHTMLParser - for HTML documents delivered in `application/xhtml+xml`
+* RDFaHTMLParser - for HTML documents delivered in `text/html`
+
 
 ## File index
 
@@ -60,6 +81,7 @@ Extracts RDF statements out of a DOM document `document`, assuming a URI base `b
 
 Returns an RDFaParser instance (see below).
 
+* Processor: a reference to a subclass of RDFaParser
 * base: the URI base for the document (where the document was downloaded from)
 * document: DOM document
 * options: object with additional configuration
@@ -67,13 +89,27 @@ Returns an RDFaParser instance (see below).
 	* defaultLanguage: default language for when no language is specified by the document (use the language specified in the `Content-Language` header, if any)
 
 
-
 ### RDFaParser
 
 * outputGraph - instance of [RDF.Graph](https://github.com/awwright/node-rdf#graph)
 * processorGraph - instance of [RDF.Graph](https://github.com/awwright/node-rdf#graph)
 
-Maintains state during processing of a document. Created by `parseDOM`.
+Maintains state during processing of a document. Pass a subclass of this to `parseDOM` as the first argument `Processor`.
+
+
+### RDFaXMLParser
+
+RDFaParser with the default RDF context loaded.
+
+
+### RDFaXHTMLParser
+
+RDFaParser extended with the parsing rules for `application/xhtml+xml` documents.
+
+
+### RDFaHTMLParser
+
+RDFaParser extended with the parsing rules for `text/html` documents.
 
 
 ### RDFaContext
