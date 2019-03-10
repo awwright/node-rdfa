@@ -45,8 +45,8 @@ function generateCasesTtl(version, lang, Parser){
 	cases
 		.filter(function(v){ return v.expectedResults && v.hostLanguages.indexOf(lang)>=0 && v.versions.indexOf(version)>=0; })
 		.forEach(function(test){
-		if(test.num==295) return; // Ignore the one weird test that doesn't seem to have the correct triples listed
 		it(test.num+' '+test.description, function(){
+			if(test.num==295) return void this.skip(); // Ignore the one weird test that doesn't seem to have the correct triples listed
 			var queryFilename = __dirname+'/rdfa.github.io/test-suite/test-cases/'+version+'/'+lang+'/'+test.num+'.ttl';
 			var queryContents = fs.readFileSync(queryFilename, 'UTF-8');
 			var inputFilename = __dirname+'/rdfa.github.io/test-suite/test-cases/'+version+'/'+lang+'/'+test.num+'.'+suffixMap[lang];
