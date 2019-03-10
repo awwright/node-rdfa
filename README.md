@@ -1,7 +1,7 @@
 
-# RDFa 
+# ECMAScript RDFa Parser
 
-A fairly compact, cross-platform, extensible module to extract RDF information from RDFa-enabled documents.
+A fairly modular, cross-platform, extensible package to extract RDF information from RDFa-enabled documents.
 
 Features:
 
