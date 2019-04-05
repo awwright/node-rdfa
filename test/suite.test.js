@@ -77,10 +77,14 @@ function generateCasesTtl(version, lang){
 			var inputFilename = __dirname+'/rdfa.github.io/test-suite/test-cases/'+version+'/'+lang+'/'+test.num+'.'+suffix;
 			var inputContents = fs.readFileSync(inputFilename, 'UTF-8');
 			var inputURI = TCPATH+''+version+'/'+lang+'/'+test.num+'.'+suffix;
+			var params = test.queryParam;
 
 			var document = new DOMParser().parseFromString(inputContents, 'text/xml');
 			var result = parseDOM(Parser, inputURI, document, {rdfenv:rdfenv});
 			var outputGraph = result.outputGraph;
+			if(params==='rdfagraph=processor'){
+				outputGraph = result.processorGraph;
+			}
 
 			var turtleParser = TurtleParser.parse(queryContents, inputURI);
 			var expectedGraph = turtleParser.graph;
