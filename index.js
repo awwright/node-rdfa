@@ -1,3 +1,4 @@
+"use strict";
 
 exports.tokenize = require('./lib/core.js').tokenize;
 exports.inherits = require('./lib/core.js').inherits;
